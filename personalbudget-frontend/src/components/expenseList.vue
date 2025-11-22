@@ -1,51 +1,108 @@
 <script setup>
-import { onMounted, computed } from "vue";
+import { onMounted, ref } from "vue";
 import { useExpenseStore } from "../stores/expenseStore";
-
+import ConfirmModal from "./usefulls/confirmate.vue";
+import { useI18n } from "vue-i18n";
+const { t, locale } = useI18n();
 const expenseStore = useExpenseStore();
+const selectedExpenseId = ref(null);
+
+// === IMPORTANT ===
+const show = ref(false);   // <- Accessible dans le template
+// =================
 
 onMounted(() => {
   expenseStore.fetchExpenses();
 });
 
+// Sélectionner une dépense
+const selectExpense = (expenseId) => {
+  selectedExpenseId.value = selectedExpenseId.value === expenseId ? null : expenseId;
+};
+
+// Action ouverte par le bouton "Supprimer"
+const deleteSelectedExpense = () => {
+  if (!selectedExpenseId.value) return;
+  show.value = true; // -> Ouvre le popup
+};
+
+// Action exécutée APRES confirmation
+const removeItem = async () => {
+  try {
+    await expenseStore.deleteExpense(selectedExpenseId.value);
+    selectedExpenseId.value = null;
+    show.value = false;
+  } catch (error) {
+    console.error("Erreur suppression:", error);
+    alert("Erreur lors de la suppression");
+  }
+};
+
+// Formatter montant
 const separatordemilier = (n) => {
   const number = Number(n);
-  if (isNaN(number)) {
-    console.warn("Invalid number:", n);
-    return "0";
-  }
-  return new Intl.NumberFormat("fr-FR").format(number);
+  return isNaN(number)
+    ? "0"
+    : new Intl.NumberFormat("fr-FR").format(number);
 };
 
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
+// Formatter date
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
   });
-};
 
+// Badge couleur
 const getCategoryColor = (category) => {
   const colors = {
-    'Food': '#28a745',
-    'Transport': '#007bff',
-    'Shopping': '#fd7e14',
-    'Entertainment': '#6f42c1',
-    'Bills': '#dc3545',
-    'Health': '#e83e8c',
-    'Other': '#6c757d'
+    Food: "#28a745",
+    Transport: "#007bff",
+    Shopping: "#fd7e14",
+    Entertainment: "#6f42c1",
+    Bills: "#dc3545",
+    Health: "#e83e8c",
+    Other: "#6c757d"
   };
-  return colors[category] || '#007bff';
+  return colors[category] || "#007bff";
 };
 </script>
+
 
 <template>
   <div class="expense-list-container">
     <div class="header-section">
-      <h2>Liste des Dépenses</h2>
+      <h2>{{ t("expenses.listTitle") }}</h2>
       <p class="subtitle" v-if="expenseStore.expenses.length > 0">
-        {{ expenseStore.expenses.length }} dépense(s) enregistrée(s)
+        {{ expenseStore.expenses.length }} {{ t("expenses.registeredText") }}
       </p>
+    </div>
+    <ConfirmModal
+        v-model="show"
+        :title="t('modals.deleteConfirmTitle')"
+        :message="t('modals.deleteConfirmMsg')"
+        :cancelText="t('modals.noCancel')"
+        :deleteText="t('modals.ok')"
+        @delete="removeItem"
+      />
+    <!-- Bouton de suppression -->
+    <div class="action-bar" v-if="expenseStore.expenses.length > 0 && selectedExpenseId">
+      <button 
+        @click="deleteSelectedExpense" 
+        :disabled="!selectedExpenseId"
+        class="delete-btn"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+        {{ t('expenses.actions.deleteSelected') }}
+      </button>
+      <span v-if="selectedExpenseId" class="selection-info">
+        {{t('expenses.actions.selectedRow')}}
+      </span>
     </div>
 
     <div class="table-wrapper" v-if="expenseStore.expenses.length > 0">
@@ -54,16 +111,21 @@ const getCategoryColor = (category) => {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nom</th>
-              <th>Montant</th>
-              <th>Catégorie</th>
-              <th>Date</th>
+              <th>{{t('expenses.table.id')}}</th>
+              <th>{{t('expenses.table.name')}}</th>
+              <th>{{t('expenses.table.amount')}}</th>
+              <th>{{t('expenses.table.category')}}</th>
+              <th>{{t('expenses.table.date')}}</th>
             </tr>
           </thead>
 
           <tbody>
-            <tr v-for="expense in expenseStore.expenses" :key="expense.id">
+            <tr 
+              v-for="expense in expenseStore.expenses" 
+              :key="expense.id"
+              @click="selectExpense(expense.id)"
+              :class="{ 'selected': selectedExpenseId === expense.id }"
+            >
               <td data-label="ID">
                 <span class="id-badge">#{{ expense.id }}</span>
               </td>
@@ -95,6 +157,8 @@ const getCategoryColor = (category) => {
           v-for="expense in expenseStore.expenses" 
           :key="expense.id"
           class="expense-card"
+          @click="selectExpense(expense.id)"
+          :class="{ 'selected': selectedExpenseId === expense.id }"
         >
           <div class="card-header">
             <span class="card-id">#{{ expense.id }}</span>
@@ -121,6 +185,13 @@ const getCategoryColor = (category) => {
               </svg>
               {{ formatDate(expense.created_at) }}
             </span>
+            <button 
+              v-if="selectedExpenseId === expense.id"
+              @click.stop="deleteSelectedExpense"
+              class="mobile-delete-btn"
+            >
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
@@ -163,6 +234,51 @@ const getCategoryColor = (category) => {
   font-size: 0.95rem;
 }
 
+/* Action Bar */
+.action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+.delete-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.selection-info {
+  color: #007bff;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 /* Desktop Table Styles */
 .desktop-table {
   display: block;
@@ -194,11 +310,28 @@ const getCategoryColor = (category) => {
 .desktop-table tbody tr {
   border-bottom: 1px solid #e9ecef;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .desktop-table tbody tr:hover {
   background-color: #f8f9fa;
   transform: scale(1.01);
+}
+
+.desktop-table tbody tr.selected {
+  background-color: #e3f2fd;
+  border-left: 4px solid #007bff;
+  position: relative;
+}
+
+.desktop-table tbody tr.selected::before {
+  content: "✓";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #007bff;
+  font-weight: bold;
 }
 
 .desktop-table tbody tr:last-child {
@@ -267,34 +400,7 @@ const getCategoryColor = (category) => {
   font-size: 1rem;
 }
 
-/* Tablet */
-@media (max-width: 768px) {
-  .expense-list-container {
-    padding: 0.75rem;
-  }
-
-  .desktop-table th,
-  .desktop-table td {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.85rem;
-  }
-
-  .id-badge {
-    padding: 0.2rem 0.6rem;
-    font-size: 0.8rem;
-  }
-
-  .amount {
-    font-size: 0.95rem;
-  }
-
-  .category-badge {
-    padding: 0.3rem 0.7rem;
-    font-size: 0.8rem;
-  }
-}
-
-/* Mobile - Switch to Card View */
+/* Mobile Styles */
 @media (max-width: 640px) {
   .desktop-table {
     display: none;
@@ -312,11 +418,18 @@ const getCategoryColor = (category) => {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
   }
 
   .expense-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .expense-card.selected {
+    border-color: #007bff;
+    background-color: #f8fbff;
   }
 
   .card-header {
@@ -361,6 +474,9 @@ const getCategoryColor = (category) => {
   }
 
   .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 0.75rem 1rem;
     background: #f8f9fa;
     border-top: 1px solid #e9ecef;
@@ -376,6 +492,57 @@ const getCategoryColor = (category) => {
 
   .card-date svg {
     color: #6c757d;
+  }
+
+  .mobile-delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .delete-btn {
+    justify-content: center;
+  }
+
+  .selection-info {
+    text-align: center;
+  }
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .expense-list-container {
+    padding: 0.75rem;
+  }
+
+  .desktop-table th,
+  .desktop-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .id-badge {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .amount {
+    font-size: 0.95rem;
+  }
+
+  .category-badge {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
   }
 }
 

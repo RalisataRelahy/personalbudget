@@ -13,12 +13,12 @@
                             <line x1="23" y1="11" x2="17" y2="11"></line>
                         </svg>
                     </div>
-                    <h2>Create Account</h2>
-                    <p class="subtitle">Sign up to get started with your budget</p>
+                    <h2>{{t('auth.registerTitle')}}</h2>
+                    <p class="subtitle">{{ t('auth.registerSubtitle') }}</p>
                 </div>
 
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="username">{{t('auth.username')}}</label>
                     <div class="input-wrapper">
                         <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -28,7 +28,7 @@
                             id="username"
                             type="text" 
                             v-model="username" 
-                            placeholder="Choose a username" 
+                            :placeholder="t('auth.usernamePlaceholder')" 
                             required
                             :disabled="loading"
                         />
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email Address</label>
+                    <label for="email">{{t('auth.email')}}</label>
                     <div class="input-wrapper">
                         <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -46,7 +46,7 @@
                             id="email"
                             type="email" 
                             v-model="email" 
-                            placeholder="Enter your email" 
+                            :placeholder="t('auth.emailPlaceholder')" 
                             required
                             :disabled="loading"
                         />
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">{{t('auth.password')}}</label>
                     <div class="input-wrapper">
                         <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -64,7 +64,7 @@
                             id="password"
                             type="password" 
                             v-model="password" 
-                            placeholder="Create a password" 
+                            :placeholder="t('auth.passwordPlaceholder')" 
                             required
                             :disabled="loading"
                         />
@@ -88,7 +88,7 @@
                 </div>
 
                 <button type="submit" :disabled="loading" class="submit-btn">
-                    <span v-if="!loading">Sign Up</span>
+                    <span v-if="!loading">{{t('auth.registerButton')}}</span>
                     <span v-else class="loading-spinner">
                         <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="2" x2="12" y2="6"></line>
@@ -105,7 +105,7 @@
                 </button>
 
                 <div class="form-footer">
-                    <p>Already have an account? <router-link to="/login" class="link">Login</router-link></p>
+                    <p>{{t('auth.alreadyHaveAccount')}} <router-link to="/login" class="link">{{t('auth.loginButton')}}</router-link></p>
                 </div>
             </form>
         </div>
@@ -114,62 +114,66 @@
 
 <script>
 import HeaderLogSing from "@/components/usefulls/headerLogSing.vue";
+import { useI18n } from 'vue-i18n';
 
 export default {
-    components: {
-        HeaderLogSing
+  components: { HeaderLogSing },
+  data() {
+    return {
+      username: "",
+      email: "",
+      password: "",
+      loading: false,
+      error: "",
+      success: "",
+    };
+  },
+  setup() {
+    const { t } = useI18n();
+    return { t };
+  },
+  methods: {
+    async signup() {
+      this.loading = true;
+      this.error = "";
+      this.success = "";
+
+      try {
+        const res = await fetch("http://localhost:3000/users/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: this.username,
+            email: this.email,
+            password: this.password,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          this.error = data.error || this.t("signup.failed"); // Use i18n
+          return;
+        }
+
+        this.success = this.t("signup.success"); // Use i18n
+
+        // Redirect after 1.5s
+        setTimeout(() => {
+          this.$router.push("/login");
+        }, 1500);
+
+      } catch (err) {
+        this.error = this.t("signup.serverError");
+        console.error("Signup error:", err);
+      } finally {
+        this.loading = false;
+      }
     },
-    data() {
-        return {
-            username: "",
-            email: "",
-            password: "",
-            loading: false,
-            error: "",
-            success: "",
-        };
-    },
-    methods: {
-        async signup() {
-            this.loading = true;
-            this.error = "";
-            this.success = "";
-            
-            try {
-                const res = await fetch("http://localhost:3000/users/signup", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        username: this.username,
-                        email: this.email,
-                        password: this.password,
-                    }),
-                });
-                
-                const data = await res.json();
-                
-                if (!res.ok) {
-                    this.error = data.error || "Signup failed. Please try again.";
-                    return;
-                }
-                
-                this.success = "Signup successful! Redirecting to login...";
-                
-                // Redirect to login page after 1.5 seconds
-                setTimeout(() => {
-                    this.$router.push("/login");
-                }, 1500);
-                
-            } catch (err) {
-                this.error = "Server unreachable. Please try again later.";
-                console.error("Signup error:", err);
-            } finally {
-                this.loading = false;
-            }
-        },
-    },
+  },
 };
 </script>
+
 
 <style scoped>
 * {

@@ -5,6 +5,9 @@ import Chart from "./usefulls/chart.vue";
 import StatsCard from "./usefulls/categorie.vue";
 import ChatAi from "./chatAi.vue";
 import Budgettracker from "./budgettracker.vue";
+import { useI18n } from "vue-i18n";
+
+const { t, locale } = useI18n();
 
 const saveToStorage = (key, data) => {
   localStorage.setItem(key, JSON.stringify(data));
@@ -175,29 +178,29 @@ const getCategoryColor = (category) => {
 
 <template>
   <div id="dashboard-container">
-    <h1>Dashboard</h1>
-    <h2>Statistique des dépenses:</h2>
+    <h1>{{ t("dashboard.title") }}</h1>
+    <h2>{{ t("dashboard.expenseStatistic") }}</h2>
     <div class="card-container">
       <div class="card">
-        <p>Total dépenses:</p>
+        <p>{{ t("dashboard.totalSpent") }}</p>
         {{ formattedTotal }} Ar
       </div>
       <div class="card">
-        <p>Total dépenses ce mois-ci:</p>
+        <p>{{ t("dashboard.totalMonth") }}</p>
         {{ formattedMonthly }} Ar
       </div>
       <div class="card">
-        <p>Dépenses moyennes journalières:</p>
+        <p>{{ t("dashboard.dailyAverage") }}</p>
         {{ formattedDaily }} Ar
       </div>
       <div class="card">
-        <p>Catégorie la plus dépensée:</p>
+        <p>{{ t("dashboard.topCategory") }}</p>
         {{ mostSpentCategory }}
       </div>
     </div>
 
     <div class="cat-views" v-if="categoriesWithTotals.length > 0">
-      <h2>Dépenses par Catégorie</h2>
+      <h2>{{ t("dashboard.expensePerCategory") }}</h2>
       <div class="category-cards">
         <StatsCard 
           v-for="cat in categoriesWithTotals"
@@ -212,12 +215,12 @@ const getCategoryColor = (category) => {
     </div>
 
     <div class="views">
-      <h2>Spéculation des dépenses:</h2>
+      <h2>{{ t("dashboard.expenseSpeculation") }}</h2>
       <Chart :expenses="chartData" />
     </div>
 
     <div class="recent-expenses">
-      <h2>Mes 5 dernières dépenses</h2>
+      <h2>{{ t("dashboard.lastExpenses") }}</h2>
       <div v-if="getlastfiveexpense.length > 0" class="expense-grid">
         <div 
           v-for="exp in getlastfiveexpense" 
@@ -242,14 +245,14 @@ const getCategoryColor = (category) => {
     <p v-if="expenseStore.expenses.length === 0">Aucune dépense pour le moment.</p>
 
     <div class="AIHelpers">
-      <h2>💬 AI Helper!</h2>
+      <h2>{{ t("dashboard.aiHelper") }}</h2>
       <div class="choice-ai-container">
         <ChatAi/>
       </div>
     </div>
     
     <div class="budget-tracker-section">
-      <h2>Monthly Budget Tracker</h2>
+      <h2>{{ t("dashboard.monthlyTracker") }}</h2>
       <div class="budget-container">
         <Budgettracker 
           :monthlyBudget="monthlyBudget"
@@ -264,9 +267,10 @@ const getCategoryColor = (category) => {
 <style scoped>
 /* Container principal */
 #dashboard-container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 0.5rem 1rem;
+  width: 100%;
+  /* margin: auto; */
+  background-color: var(--card-bg);
+  padding: 0.5rem 5rem;
   text-align: center;
 }
 
@@ -290,7 +294,7 @@ const getCategoryColor = (category) => {
 }
 
 .card {
-  background: linear-gradient(135deg, #007BFF, #4ba3ff);
+  background: var(--card-bg-style);
   color: white;
   padding: 1.5rem;
   border-radius: 18px;
@@ -339,14 +343,14 @@ const getCategoryColor = (category) => {
 .recent-expenses {
   margin: 2rem 0;
   padding: 1.5rem;
-  background: #f8f9fa;
+  background: var(--card-bg);
   border-radius: 12px;
 }
 
 .recent-expenses h2,
 .recent-expenses h3 {
   margin-top: 0;
-  color: #333;
+  color: var(--text-color);
   border-bottom: 2px solid #007BFF;
   padding-bottom: 0.5rem;
 }
@@ -405,7 +409,7 @@ const getCategoryColor = (category) => {
 }
 
 .expense-category {
-  background: #e9ecef;
+  background: var(--card-bg-style);
   padding: 0.2rem 0.5rem;
   border-radius: 12px;
 }
@@ -425,12 +429,14 @@ const getCategoryColor = (category) => {
 .AIHelpers {
   margin: 2rem 0;
   padding: 1.5rem;
-  background: #f0f7ff;
+  border-color:var(--border-color);
+  background: var(--card-bg);
   border-radius: 12px;
 }
 
 .choice-ai-container {
   display: flex;
+  background-color: var(--card-bg);
   flex-direction: column;
   gap: 1rem;
 }
@@ -439,7 +445,7 @@ const getCategoryColor = (category) => {
 .budget-tracker-section {
   margin: 2rem 0;
   padding: 1.5rem;
-  background: #fff;
+  background-color: var(--card-bg);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

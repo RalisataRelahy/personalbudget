@@ -11,12 +11,12 @@
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </div>
-                    <h2>Welcome Back</h2>
-                    <p class="subtitle">Sign in to continue to your account</p>
+                    <h2>{{t('auth.title')}}</h2>
+                    <p class="subtitle">{{ t('auth.subtitle') }}</p>
                 </div>
 
                 <div class="form-group">
-                    <label for="identifier">Email or Username</label>
+                    <label for="identifier">{{t('auth.identifier')}}:</label>
                     <div class="input-wrapper">
                         <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -26,7 +26,7 @@
                             id="identifier"
                             type="text" 
                             v-model="identifier" 
-                            placeholder="Enter your email or username" 
+                            :placeholder="t('auth.identifierPlaceholder')"
                             required
                             :disabled="loading"
                         />
@@ -34,7 +34,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">{{t('auth.password')}}:</label>
                     <div class="input-wrapper">
                         <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -44,7 +44,7 @@
                             id="password"
                             type="password" 
                             v-model="password" 
-                            placeholder="Enter your password" 
+                            :placeholder="t('auth.passwordPlaceholder')"
                             required
                             :disabled="loading"
                         />
@@ -61,7 +61,7 @@
                 </div>
 
                 <button type="submit" :disabled="loading" class="submit-btn">
-                    <span v-if="!loading">Sign In</span>
+                    <span v-if="!loading">{{t('auth.loginButton')}}</span>
                     <span v-else class="loading-spinner">
                         <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="2" x2="12" y2="6"></line>
@@ -78,73 +78,84 @@
                 </button>
 
                 <div class="form-footer">
-                    <p>Don't have an account? <router-link to="/signup" class="link">Sign Up</router-link></p>
+                    <p>{{t('auth.noAccount')}} <router-link to="/signup" class="link">{{t('auth.registerButton')}}</router-link></p>
                 </div>
             </form>
         </div>
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { jwtDecode } from 'jwt-decode';
-import HeaderLogSing from '../components/usefulls/headerLogSing.vue';
 
-export default {
-    components: {
-        HeaderLogSing
-    },
-    data() {
-        return {
-            identifier: "",
-            password: "",
-            loading: false,
-            error: "",
-            userId: null,
-        };
-    },
-    methods: {
-        async login() {
-            this.loading = true;
-            this.error = "";
-            
-            try {
-                const res = await fetch("http://localhost:3000/users/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        identifier: this.identifier,
-                        password: this.password
-                    })
-                });
-                
-                const data = await res.json();
-                
-                if (!res.ok) {
-                    this.error = data.message || "Invalid credentials";
-                    return;
-                }
-                
-                // Store token in localStorage
-                localStorage.setItem("token", data.token);
-                const decoded = jwtDecode(data.token);
-                this.userId = decoded.id;
-                console.log("Connected user ID:", this.userId);
-                
-                // Redirect
-                this.$router.push("/");
-                
-            } catch (err) {
-                this.error = "Server unreachable. Please try again later.";
-                console.error("Login error:", err);
-            } finally {
-                this.loading = false;
-            }
-        }
+import HeaderLogSing from '../components/usefulls/headerLogSing.vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+const router = useRouter();
+
+// Reactive variables
+const identifier = ref("");
+const password = ref("");
+const loading = ref(false);
+const error = ref("");
+const userId = ref(null);
+
+// Login method
+async function login() {
+  loading.value = true;
+  error.value = "";
+
+  try {
+    // Step 1: Login to get token
+    const res = await fetch("http://localhost:3000/users/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier: identifier.value, password: password.value })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      error.value = data.error || "Wrong password! Please try again.";
+      return;
     }
+
+    // Step 2: Store token
+    localStorage.setItem("token", data.token);
+
+    // Step 3: Fetch current user
+    const meRes = await fetch("http://localhost:3000/users/me", {
+      headers: { "Authorization": "Bearer " + data.token }
+    });
+
+    const meData = await meRes.json();
+
+    if (!meRes.ok) {
+      error.value = meData.error || "Unable to fetch user info";
+      return;
+    }
+
+    // Step 4: Save user data locally
+    const user = meData.user;
+    userId.value = user.id;
+    localStorage.setItem("currentUser", JSON.stringify(user));
+    console.log("Current user:", user);
+
+    // Step 5: Redirect
+    router.push("/");
+
+  } catch (err) {
+    error.value = "Server unreachable. Please try again later.";
+    console.error("Login error:", err);
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
+
 
 <style scoped>
 * {

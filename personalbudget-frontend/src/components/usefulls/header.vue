@@ -8,10 +8,10 @@
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
           </svg>
         </div>
-        <span class="logo-text">Personal Budget</span>
+        <span class="logo-text">{{ t("app.name") }}</span>
       </div>
 
-      <!-- Burger Button - Visible only on mobile -->
+      <!-- Burger Button -->
       <button 
         class="burger-button" 
         @click="toggleMenu"
@@ -23,20 +23,42 @@
         <span></span>
       </button>
 
+      <ConfirmModal 
+        v-model="show"
+        :title="t('nav.logout')"
+        :message="t('auth.logoutConfirm')"
+        :cancelText="t('confirm.cancel')"
+        :deleteText="t('nav.logout')"
+        @delete="logout"
+      />
+
       <!-- Navigation -->
       <nav class="nav-container" :class="{ open: isMenuOpen }">
         <ul class="nav-links">
+
           <li>
-            <router-link to="/" class="nav-link" @click="closeMenu">
+            <router-link to="/acceuil" class="nav-link" @click="closeMenu">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>{{ t("nav.home") }}</span>
+            </router-link>
+          </li>
+
+          <li>
+            <router-link to="/dashboard" class="nav-link" @click="closeMenu">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect>
                 <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
-              <span>Dashboard</span>
+              <span>{{ t("nav.dashboard") }}</span>
             </router-link>
           </li>
+
           <li>
             <router-link to="/add-expense" class="nav-link" @click="closeMenu">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -44,9 +66,10 @@
                 <line x1="12" y1="8" x2="12" y2="16"></line>
                 <line x1="8" y1="12" x2="16" y2="12"></line>
               </svg>
-              <span>Add Expense</span>
+              <span>{{ t("expenses.addTitle") }}</span>
             </router-link>
           </li>
+
           <li>
             <router-link to="/list-expense" class="nav-link" @click="closeMenu">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -57,24 +80,34 @@
                 <line x1="3" y1="12" x2="3.01" y2="12"></line>
                 <line x1="3" y1="18" x2="3.01" y2="18"></line>
               </svg>
-              <span>List Expense</span>
+              <span>{{ t("expenses.title") }}</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/profile" class="nav-link" @click="closeMenu">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span>{{ t("nav.profile") }}</span>
             </router-link>
           </li>
         </ul>
       </nav>
+
+      <!-- Logout Button -->
+      <button @click="show = true" class="logout-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="logout-text">{{ t("nav.logout") }}</span>
+      </button>
     </div>
-    <div id="btnlogout">
-        <button @click="logout" class="logout-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            <span>Logout</span>
-        </button>
-    </div>
-    
-    <!-- Overlay for mobile menu -->
+
+    <!-- Overlay -->
     <div 
       class="menu-overlay" 
       :class="{ active: isMenuOpen }" 
@@ -84,190 +117,74 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-const router = useRouter();
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import ConfirmModal from "./confirmate.vue";
+import { useI18n } from "vue-i18n";
 
-function logout() {
-  localStorage.removeItem('token'); // remove the JWT
-  router.push('/login');            // redirect to login
-}
+const { t } = useI18n();
+
+const show = ref(false);
+const router = useRouter();
 const isMenuOpen = ref(false);
+
+const logout = () => {
+  localStorage.removeItem("token");
+  router.push("/login");
+};
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
-  
-  // Prevent body scroll when menu is open
-  if (isMenuOpen.value) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
+  document.body.style.overflow = isMenuOpen.value ? "hidden" : "";
 };
 
 const closeMenu = () => {
   isMenuOpen.value = false;
-  document.body.style.overflow = '';
+  document.body.style.overflow = "";
 };
 
-// Close menu on escape key
 const handleEscape = (e) => {
-  if (e.key === 'Escape' && isMenuOpen.value) {
+  if (e.key === "Escape" && isMenuOpen.value) {
     closeMenu();
   }
 };
 
 onMounted(() => {
-  document.addEventListener('keydown', handleEscape);
+  document.addEventListener("keydown", handleEscape);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleEscape);
-  document.body.style.overflow = '';
+  document.removeEventListener("keydown", handleEscape);
+  document.body.style.overflow = "";
 });
 </script>
 
 <style scoped>
 .header {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%);
+  background: var(--header-color);
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
-  border-radius: 16px;
-  height: 100px;
-  margin-bottom: 1rem;
-  padding: 0.5rem 1.5rem;
+  padding: 1rem 1.5rem;
   position: relative;
   overflow: visible;
 }
 
-.header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-#btnlogout{
-  position: absolute;
-  right: 1rem;
-}
-#btnlogout {
-    display: inline-block;
-}
-
-.logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #f05252 0%, #dc2626 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-}
-
-.logout-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-}
-
-.logout-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-}
-
-.logout-btn svg {
-    transition: transform 0.3s ease;
-}
-
-.logout-btn:hover svg {
-    transform: translateX(3px);
-}
-
-/* Version compacte pour mobile */
-@media (max-width: 768px) {
-    .logout-btn {
-        padding: 8px 16px;
-        font-size: 14px;
-    }
-    
-    .logout-btn svg {
-        width: 16px;
-        height: 16px;
-    }
-}
-
-/* Variante minimaliste (décommentez pour utiliser) */
-/*
-.logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: transparent;
-    color: #dc2626;
-    border: 2px solid #dc2626;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.logout-btn:hover {
-    background: #dc2626;
-    color: white;
-}
-*/
-
-/* Variante pour header sombre */
-/*
-.logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-}
-
-.logout-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
-}
-*/
 .header-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   position: relative;
   z-index: 10;
-  gap: 5rem;
+  gap: 2rem;
+}
+
+.logo-section {
+  margin-right: auto;
 }
 
 .logo-section {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0;
 }
 
 .logo-icon {
@@ -281,11 +198,6 @@ onUnmounted(() => {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
-}
-
-.logo-icon:hover {
-  transform: rotate(360deg) scale(1.1);
-  background: rgba(255, 255, 255, 0.3);
 }
 
 .logo-icon svg {
@@ -302,7 +214,7 @@ onUnmounted(() => {
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Burger Button - Hidden by default */
+/* Burger Button */
 .burger-button {
   display: none;
   flex-direction: column;
@@ -314,7 +226,6 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0;
   z-index: 20;
-  transition: transform 0.3s ease;
 }
 
 .burger-button span {
@@ -323,11 +234,6 @@ onUnmounted(() => {
   background: white;
   border-radius: 10px;
   transition: all 0.3s ease;
-  transform-origin: center;
-}
-
-.burger-button:hover {
-  transform: scale(1.1);
 }
 
 .burger-button.active span:nth-child(1) {
@@ -336,7 +242,6 @@ onUnmounted(() => {
 
 .burger-button.active span:nth-child(2) {
   opacity: 0;
-  transform: translateX(-20px);
 }
 
 .burger-button.active span:nth-child(3) {
@@ -370,76 +275,88 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.nav-link:hover::before {
-  left: 100%;
+  transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .nav-link svg {
   width: 20px;
   height: 20px;
-  transition: transform 0.3s ease;
 }
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: white;
-}
-
-.nav-link:hover svg {
-  transform: scale(1.1) rotate(5deg);
-}
-
-.nav-link:active {
-  transform: translateY(0);
 }
 
 .nav-link.router-link-active {
   background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
   color: white;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.nav-link.router-link-active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 3px;
-  background: white;
-  border-radius: 2px 2px 0 0;
+/* Logout Button */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #f05252 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  white-space: nowrap;
 }
 
-/* Overlay - Hidden by default */
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.logout-text {
+  display: inline;
+}
+
+/* Overlay */
 .menu-overlay {
   display: none;
 }
 
-/* Tablets and below - Show burger menu */
+/* RESPONSIVE - TABLET (≤ 768px) */
+@media (max-width: 968px) {
+  .header-content {
+    gap: 1rem;
+  }
+
+  .nav-links {
+    gap: 0.3rem;
+  }
+
+  .nav-link {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .nav-link svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .logout-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+
+/* RESPONSIVE - MOBILE (≤ 768px) */
 @media (max-width: 768px) {
   .header {
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
   }
 
   .burger-button {
@@ -477,7 +394,7 @@ onUnmounted(() => {
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
     padding: 5rem 1.5rem 2rem;
     transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
+    z-index: 9;
     overflow-y: auto;
   }
 
@@ -494,32 +411,17 @@ onUnmounted(() => {
   .nav-link {
     width: 100%;
     padding: 1rem 1.25rem;
-    justify-content: flex-start;
     font-size: 1rem;
     background: rgba(255, 255, 255, 0.15);
   }
 
   .nav-link:hover {
     transform: translateX(8px);
-    background: rgba(255, 255, 255, 0.25);
-  }
-
-  .nav-link.router-link-active::after {
-    left: 0;
-    transform: none;
-    width: 4px;
-    height: 100%;
-    border-radius: 0 2px 2px 0;
   }
 }
 
-/* Mobile devices */
+/* RESPONSIVE - SMALL MOBILE (≤ 480px) */
 @media (max-width: 480px) {
-  .header {
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-  }
-
   .logo-text {
     font-size: 1.1rem;
   }
@@ -534,34 +436,25 @@ onUnmounted(() => {
     height: 20px;
   }
 
-  .burger-button {
-    width: 28px;
-    height: 24px;
+  .logout-btn {
+    padding: 8px 12px;
+    font-size: 14px;
   }
 
-  .burger-button span {
-    height: 2.5px;
+  .logout-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   .nav-container {
     width: 260px;
   }
-
-  .nav-link {
-    padding: 0.875rem 1rem;
-    font-size: 0.95rem;
-  }
-
-  .nav-link svg {
-    width: 18px;
-    height: 18px;
-  }
 }
 
-/* Very small mobile devices */
+/* RESPONSIVE - VERY SMALL (≤ 360px) */
 @media (max-width: 360px) {
   .logo-text {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .logo-icon {
@@ -569,35 +462,16 @@ onUnmounted(() => {
     height: 32px;
   }
 
-  .burger-button {
-    width: 26px;
-    height: 22px;
+  .logout-text {
+    display: none;
+  }
+
+  .logout-btn {
+    padding: 8px;
   }
 
   .nav-container {
     width: 240px;
-    padding: 4rem 1rem 2rem;
-  }
-
-  .nav-link {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* Desktop - Ensure menu is always visible */
-@media (min-width: 769px) {
-  .nav-container {
-    position: static;
-    width: auto;
-    height: auto;
-    background: none;
-    box-shadow: none;
-    padding: 0;
-  }
-
-  .nav-links {
-    flex-direction: row;
   }
 }
 </style>

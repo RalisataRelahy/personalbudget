@@ -22,7 +22,19 @@ export const useExpenseStore = defineStore("expenseStore", {
                 console.error("Error fetching expenses:", err);
             }
         },
-
+        async deleteExpense(id) {
+            try {
+                const token = localStorage.getItem("token");
+                await axios.delete(`${url}/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // <-- send token
+                    },
+                });
+                this.expenses = this.expenses.filter((expense) => expense.id !== id);
+            } catch (err) {
+                console.error("Error deleting expense:", err);
+            }
+        },
         async addExpense(expense) {
             try {
                 const token = localStorage.getItem("token");

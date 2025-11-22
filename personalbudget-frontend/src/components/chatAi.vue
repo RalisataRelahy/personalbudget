@@ -73,10 +73,11 @@ const choix = ref([
 
 <style scoped>
 .simple-chat {
-  background: white;
+  background-color: var(--card-bg);
+  border-bottom: 2px solid var(--border-color);
   padding: 1rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(233, 233, 233, 0.1);
   margin: 1rem 0;
 }
 .choice {

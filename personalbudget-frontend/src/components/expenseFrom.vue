@@ -1,7 +1,11 @@
 <script setup>
 import { ref } from "vue";
 import { useExpenseStore } from "../stores/expenseStore";
-
+import InfoModal from "@/components/usefulls/info.vue";
+import ConfirmModal from "@/components/usefulls/confirmate.vue";
+import { useI18n } from "vue-i18n";
+const { t, locale } = useI18n();
+const showInfo = ref(false);
 const expenseStore = useExpenseStore();
 
 const name = ref("");
@@ -9,6 +13,7 @@ const amount = ref(0);
 const category = ref("Food");
 
 const addExpenseItem = async () => {
+  showInfo.value = true;
   if (!name.value || amount.value <= 0) return;
   await expenseStore.addExpense({ name: name.value, amount: amount.value, category: category.value });
   name.value = "";
@@ -18,22 +23,47 @@ const addExpenseItem = async () => {
 </script>
 
 <template>
-  <div class="form-content">
-    <h2>Add Expense</h2>
-    <input v-model="name" placeholder="Expense Name" />
-    <input v-model.number="amount" placeholder="Amount" type="number" />
+  <div class="content">
+    <div class="form-content">
+    <InfoModal
+      v-model="showInfo"
+      :title="t('expenses.registeredTitle')"
+      :message="t('expenses.registeredSubtitle')"
+    />
+    <h2>{{ t("expenses.addTitle") }}</h2>
+    <input v-model="name" :placeholder="t('expenses.namePlaceholder')" />
+    <input v-model.number="amount" :placeholder="t('expenses.amountPlaceholder')" type="number" />
     <select v-model="category">
-      <option>Food</option>
-      <option>Transport</option>
-      <option>Other</option>
+      <option>{{ t("expenses.categories.Food") }}</option>
+      <option>{{ t("expenses.categories.Transport") }}</option>
+      <option>{{ t("expenses.categories.Housing") }}</option>
+      <option>{{ t("expenses.categories.Health") }}</option>
+      <option>{{ t("expenses.categories.Education") }}</option>
+      <option>{{ t("expenses.categories.Entertainment") }}</option>
+      <option>{{ t("expenses.categories.Savings / Investments") }}</option>
+      <option>{{ t("expenses.categories.Shopping") }}</option>
+      <option>{{ t("expenses.categories.Work / Business") }}</option>
+      <option>{{ t("expenses.categories.Other") }}</option>
     </select>
     <button @click="addExpenseItem">Add Expense</button>
   </div>
+  </div>
+  
 </template>
 
 <style scoped>
+.content{
+  display: flex;
+  align-items: center;
+  /* justify-content: center;  */
+  height: 90vh;
+  width: 100%;
+  margin:0; 
+  background-color: var(--card-bg);
+}
 .form-content {
   display: flex;
+  width: 35%;
   flex-direction: column;
   align-items: center;
   justify-content: center;

@@ -22,7 +22,9 @@ function logout() {
 header {
   line-height: 1.5;
 }
-
+router-view {
+  background-color: var(--card-bg);
+}
 .logo {
   display: block;
   margin: 0 auto 2rem;

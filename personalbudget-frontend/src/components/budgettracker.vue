@@ -2,7 +2,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '../services/userStore';
+import { useI18n } from "vue-i18n";
 
+const { t, locale } = useI18n();
 const userStore = useUserStore();
 
 // Pour saisir le nouveau budget
@@ -76,26 +78,26 @@ const consumptionPercentage = computed(() => {
       
       <div class="budget-form">
         <input type="number" v-model.number="newBudget" placeholder="Set new budget" />
-        <button @click="update" class="btn">Set Budget</button>
+        <button @click="update" class="btn">{{ t("budget.setNewBudget") }}</button>
       </div>
 
       <div class="budget-info">
         <div class="budget-item">
-          <span>Budget:</span>
+          <span>{{ t("budget.title") }}</span>
           <strong>{{ monthlyBudgetFormatted || 0 }} Ar</strong>
         </div>
         <div class="budget-item">
-          <span>Spent:</span>
+          <span>{{ t("budget.spentLabel") }}:</span>
           <strong>{{ totalSpentFormatted }} Ar</strong>
         </div>
         <div class="budget-item" :class="{ 'over-budget-text': isOverBudget }">
-          <span>Remaining:</span>
+          <span>{{ t("budget.remainingLabel") }}:</span>
           <strong>{{ remainingBudgetFormatted }} Ar</strong>
         </div>
 
         <div v-if="monthlyBudget > 0" class="consumption-info">
           <div class="budget-item">
-            <span>Budget Usage:</span>
+            <span>{{ t("budget.usageLabel") }}:</span>
             <strong :class="{ 'text-red': budgetUsage > 80, 'text-orange': budgetUsage > 50 && budgetUsage <= 80, 'text-green': budgetUsage <= 50 }">
               {{ consumptionPercentage }}%
             </strong>
@@ -112,7 +114,7 @@ const consumptionPercentage = computed(() => {
         </div>
 
         <div v-if="monthlyBudget === 0" class="no-budget-message">
-          <p>💡 Set a monthly budget to track your spending!</p>
+          <p>{{ t("budget.emptyState") }}</p>
         </div>
       </div>
     </div>
@@ -121,20 +123,21 @@ const consumptionPercentage = computed(() => {
 
 <style scoped>
 .budget-tracker {
+  
   margin-bottom: 2rem;
 }
 
 .budget-card {
-  background: white;
+  background-color: var(--card-bg);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  /* box-shadow: 0 2px 10px rgba(0,0,0,0.1); */
   transition: all 0.3s ease;
 }
 
 .budget-card.over-budget {
   border-left: 6px solid #e74c3c;
-  background: #ffebee;
+  background: var(--card-bg);
 }
 
 .budget-card.under-budget {
