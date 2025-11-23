@@ -21,6 +21,33 @@ export const useUserStore = defineStore("userStore", {
                 console.error("Error fetching user:", err);
             }
         },
+        async changePassword(currentPassword, newPassword, confirmPassword) {
+            try {
+                const token = localStorage.getItem("token");
+
+                const res = await axios.put(
+                    "http://localhost:3000/users/password",
+                    { currentPassword, newPassword, confirmPassword },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                this.user = res.data.user;
+
+                return {
+                    success: true,
+                    message: res.data.message || "Password updated successfully"
+                };
+
+            } catch (err) {
+                console.error("Error changing password:", err);
+
+                return {
+                    success: false,
+                    message: err.response?.data?.error || "Failed to update password"
+                };
+            }
+        },
+
         async fetchBudget() {
             // fetchBudget is now redundant if fetchUser gets the budget, 
             // but we can keep it or alias it. 

@@ -90,5 +90,58 @@ router.get("/me", auth, async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
+router.put("/password", auth, async (req, res) => {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ error: "Passwords do not match" });
+    }
+
+    try {
+        const userId = req.userId;
+
+        const user = await pool.query("SELECT * FROM users WHERE id=$1", [userId]);
+        if (user.rows.length === 0) return res.status(404).json({ error: "User not found" });
+
+        const valid = await bcrypt.compare(currentPassword, user.rows[0].password);
+        if (!valid) return res.status(401).json({ error: "Current password is incorrect" });
+        console.log({ currentPassword, userPassword: user.rows[0].password });
+        const hashed = await bcrypt.hash(newPassword, 10);
+
+        await pool.query(
+            "UPDATE users SET password=$1 WHERE id=$2",
+            [hashed, userId]
+        );
+
+        return res.json({ message: "Password updated successfully" });
+    } catch (err) {
+        console.error("Password update error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+// routes/login&signup.js
+router.delete("/me", auth, async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        // Delete user from database
+        const result = await pool.query(
+            "DELETE FROM users WHERE id = $1 RETURNING id, username",
+            [userId]
+        );
+
+        if (result.rows.length === 0)
+            return res.status(404).json({ error: "User not found" });
+
+        res.json({ message: "Account deleted successfully", user: result.rows[0] });
+    } catch (err) {
+        console.error("Delete account error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
 
 module.exports = router;

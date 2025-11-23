@@ -24,8 +24,8 @@
         "email": "Adresse e-mail",
         "emailPlaceholder": "Entrez votre email",
         "username": "Nom d'utilisateur",
-        "identifier":"Email or Username",
-        "identifierPlaceholder":"Entrer votre Email/Username",
+        "identifier": "Email or Username",
+        "identifierPlaceholder": "Entrer votre Email/Username",
         "usernamePlaceholder": "Entrer un nom d'utilisateur",
         "password": "Mot de passe",
         "passwordPlaceholder": "Entrez votre mot de passe",
@@ -42,7 +42,14 @@
         "logoutSuccess": "Vous êtes déconnecté",
         "logoutConfirm": "Voulez-vous vraiment vous déconnecter ?",
         "logoutError": "Une erreur est survenue lors de la déconnexion. Veuillez réessayer."
-
+    },
+    "changingPassword": {
+        "title": "Changer le mot de passe",
+        "subtitle": "Changer le mot de passe",
+        "currentPassword": "Mot de passe actuel",
+        "newPassword": "Nouveau mot de passe",
+        "confirmPassword": "Confirmer le mot de passe",
+        "changePassword": "Changer le mot de passe"
     },
     "home": {
         "heroTitle": "Bienvenue sur Personal Budget Tracker 💰",
@@ -87,7 +94,7 @@
         "title": "Dépenses",
         "listTitle": "Liste des dépenses",
         "registeredTitle": "Dépense(s) enregistrée(s)",
-        "registeredText":"Dépense(s) enregistrée(s)",
+        "registeredText": "Dépense(s) enregistrée(s)",
         "registeredSubtitle": "Votre dépense a été enregistrée avec succès.",
         "addTitle": "Ajouter une dépense",
         "namePlaceholder": "Nom de la dépense",
@@ -121,7 +128,7 @@
             "Other": "Autre"
         }
     },
-    "profil":{
+    "profil": {
         "title": "Profil",
         "username": "Nom d'utilisateur",
         "email": "Adresse e-mail",
@@ -137,7 +144,7 @@
         "notifications": "Notifications",
         "statistics": "Statistiques",
         "total_expenses": "Total dépenses",
-        "total_amount": "Total dépenses",
+        "total_amount": "Total montant des dépenses",
         "this_month": "Total dépenses ce mois-ci",
         "preferences": "Préférences",
         "change_password": "Changer le mot de passe",
@@ -185,5 +192,11 @@
         "network": "Erreur réseau",
         "forbidden": "Accès refusé",
         "unauthorized": "Action non autorisée"
+    },
+    "deleteAccount": {
+        "title": "Supprimer le compte",
+        "message": "Êtes-vous sûr de vouloir supprimer votre compte ?",
+        "confirm": "Oui, supprimer",
+        "cancel": "Non"
     }
 }

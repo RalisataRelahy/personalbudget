@@ -10,5 +10,4 @@ app.use(bodyParser.json());
 
 app.use("/expenses", expenseRoutes);
 app.use("/users", userRoutes);
-
 app.listen(3000, () => console.log("Backend running on port 3000"));

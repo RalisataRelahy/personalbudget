@@ -242,7 +242,6 @@ const getCategoryColor = (category) => {
       <p v-else class="no-data">Aucune dépense récente</p>
     </div>
 
-    <p v-if="expenseStore.expenses.length === 0">Aucune dépense pour le moment.</p>
 
     <div class="AIHelpers">
       <h2>{{ t("dashboard.aiHelper") }}</h2>
@@ -265,136 +264,190 @@ const getCategoryColor = (category) => {
 </template>
 
 <style scoped>
-/* Container principal */
+/* Dashboard Container */
 #dashboard-container {
-  width: 100%;
-  /* margin: auto; */
-  background-color: var(--card-bg);
-  padding: 0.5rem 5rem;
-  text-align: center;
+  margin: 0 0;
+  padding: 2rem 5rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
 }
 
 #dashboard-container h1 {
-  text-align: left;
-  font-size: clamp(2rem, 5vw, 3.125rem);
-  margin-bottom: 1rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 #dashboard-container h2 {
-  font-size: clamp(1.25rem, 3vw, 1.75rem);
-  margin: 1.5rem 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4a5568;
+  margin: 2.5rem 0 1.5rem;
+  position: relative;
+  padding-left: 1rem;
 }
 
-/* Grid Cards - Stats principales */
+#dashboard-container h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+/* Card Container - Stats Grid */
 .card-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .card {
-  background: var(--card-bg-style);
-  color: white;
-  padding: 1.5rem;
-  border-radius: 18px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-size: clamp(0.875rem, 2vw, 1rem);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  background: white;
+  padding: 1.75rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-.card p {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 
 .card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
 }
 
-/* Catégories */
+.card:hover::before {
+  transform: scaleX(1);
+}
+
+.card p {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.card {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2d3748;
+  line-height: 1.2;
+}
+
+/* Category Views */
 .cat-views {
-  margin: 2rem 0;
+  margin: 3rem 0;
 }
 
 .category-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-/* Charts */
+/* Chart Section */
 .views {
-  margin: 2rem 0;
   background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 3rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* Dépenses récentes */
+/* Recent Expenses */
 .recent-expenses {
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: var(--card-bg);
-  border-radius: 12px;
-}
-
-.recent-expenses h2,
-.recent-expenses h3 {
-  margin-top: 0;
-  color: var(--text-color);
-  border-bottom: 2px solid #007BFF;
-  padding-bottom: 0.5rem;
+  margin: 3rem 0;
 }
 
 .expense-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
 }
 
 .expense-card {
   background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #007BFF;
-  transition: transform 0.2s ease;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border-left: 4px solid #667eea;
+  position: relative;
+  overflow: hidden;
+}
+
+.expense-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  transition: width 0.3s ease;
 }
 
 .expense-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateX(4px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+.expense-card:hover::after {
+  width: 100%;
 }
 
 .expense-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .expense-name {
-  font-weight: bold;
-  color: #333;
-  word-break: break-word;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #2d3748;
   flex: 1;
+  line-height: 1.4;
 }
 
 .expense-amount {
-  font-weight: bold;
-  color: #007BFF;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #667eea;
   white-space: nowrap;
 }
 
@@ -402,95 +455,72 @@ const getCategoryColor = (category) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
-  color: #666;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .expense-category {
-  background: var(--card-bg-style);
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  color: #667eea;
+  font-size: 0.813rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid #667eea30;
 }
 
 .expense-date {
-  font-style: italic;
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 500;
 }
 
 .no-data {
   text-align: center;
-  color: #666;
-  font-style: italic;
-  margin: 2rem 0;
+  padding: 3rem;
+  color: #a0aec0;
+  font-size: 1.125rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* AI Helpers */
+/* AI Helpers Section */
 .AIHelpers {
-  margin: 2rem 0;
-  padding: 1.5rem;
-  border-color:var(--border-color);
-  background: var(--card-bg);
-  border-radius: 12px;
+  margin: 3rem 0;
 }
 
 .choice-ai-container {
-  display: flex;
-  background-color: var(--card-bg);
-  flex-direction: column;
-  gap: 1rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* Budget Tracker */
+/* Budget Tracker Section */
 .budget-tracker-section {
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background-color: var(--card-bg);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 3rem 0;
 }
 
 .budget-container {
-  margin-top: 1rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* Responsive - Tablettes */
-@media (max-width: 768px) {
+/* Tablet Styles */
+@media (max-width: 1024px) {
   #dashboard-container {
-    padding: 0.5rem;
+    padding: 1.5rem 1rem;
   }
 
   #dashboard-container h1 {
     font-size: 2rem;
-  }
-
-  .card-container {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-    gap: 0.75rem;
-  }
-
-  .card {
-    padding: 1rem;
-    min-height: 80px;
-  }
-
-  .expense-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .views {
-    padding: 1rem;
-  }
-}
-
-/* Responsive - Mobile */
-@media (max-width: 500px) {
-  #dashboard-container {
-    padding: 0.5rem 0.75rem;
-  }
-
-  #dashboard-container h1 {
-    font-size: 1.75rem;
   }
 
   #dashboard-container h2 {
@@ -498,74 +528,236 @@ const getCategoryColor = (category) => {
   }
 
   .card-container {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+
+  .category-cards {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .expense-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  #dashboard-container {
+    padding: 1rem;
+  }
+
+  #dashboard-container h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  #dashboard-container h2 {
+    font-size: 1.125rem;
+    margin: 2rem 0 1rem;
+  }
+
+  .card-container {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   .card {
-    padding: 1rem;
-    font-size: 0.9rem;
-    min-height: auto;
+    padding: 1.5rem;
   }
 
-  .card p {
-    font-size: 0.8rem;
+  .card {
+    font-size: 1.75rem;
   }
 
   .category-cards {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .views,
+  .choice-ai-container,
+  .budget-container {
+    padding: 1.5rem;
+    border-radius: 16px;
   }
 
   .expense-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .expense-card {
+    padding: 1.25rem;
+  }
+
+  .expense-name {
+    font-size: 1rem;
+  }
+
+  .expense-amount {
+    font-size: 1.125rem;
+  }
+
+  .expense-category {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+  }
+
+  .expense-date {
+    font-size: 0.813rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  #dashboard-container h1 {
+    font-size: 1.5rem;
+  }
+
+  #dashboard-container h2 {
+    font-size: 1rem;
+    padding-left: 0.75rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .card {
+    font-size: 1.5rem;
   }
 
   .expense-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.5rem;
   }
 
   .expense-amount {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
-  .recent-expenses,
-  .AIHelpers,
-  .budget-tracker-section {
-    padding: 1rem;
-  }
-
-  .views {
-    padding: 0.75rem;
-    overflow-x: auto;
+  .expense-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 
-/* Très petits écrans */
-@media (max-width: 360px) {
-  #dashboard-container h1 {
-    font-size: 1.5rem;
+/* Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
   }
-
-  .card {
-    padding: 0.75rem;
-  }
-
-  .expense-card {
-    padding: 0.75rem;
+  100% {
+    background-position: 1000px 0;
   }
 }
 
-/* Optimisation pour impression */
+.card.loading {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Smooth Entrance Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card,
+.expense-card {
+  animation: fadeInUp 0.6s ease-out backwards;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+
+.expense-card:nth-child(1) { animation-delay: 0.1s; }
+.expense-card:nth-child(2) { animation-delay: 0.15s; }
+.expense-card:nth-child(3) { animation-delay: 0.2s; }
+.expense-card:nth-child(4) { animation-delay: 0.25s; }
+.expense-card:nth-child(5) { animation-delay: 0.3s; }
+
+/* Print Styles */
 @media print {
-  .AIHelpers,
-  .budget-tracker-section {
-    page-break-inside: avoid;
+  #dashboard-container {
+    background: white;
   }
-  
+
+  .card,
+  .expense-card,
+  .views,
+  .choice-ai-container,
+  .budget-container {
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+    break-inside: avoid;
+  }
+
   .card:hover,
   .expense-card:hover {
     transform: none;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Styles */
+.expense-card:focus-within {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Dark Theme Support (optional) */
+@media (prefers-color-scheme: dark) {
+  #dashboard-container {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  }
+
+  #dashboard-container h1,
+  #dashboard-container h2,
+  .card,
+  .expense-name {
+    color: #e2e8f0;
+  }
+
+  .card,
+  .expense-card,
+  .views,
+  .choice-ai-container,
+  .budget-container,
+  .no-data {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .expense-date {
+    color: #a0aec0;
   }
 }
 </style>
