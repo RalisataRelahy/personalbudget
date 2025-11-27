@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { useExpenseStore } from "../stores/expenseStore";
 import ConfirmModal from "./usefulls/confirmate.vue";
 import { useI18n } from "vue-i18n";
+import { supabase } from '../services/supabase';
 const { t, locale } = useI18n();
 const expenseStore = useExpenseStore();
 const selectedExpenseId = ref(null);
@@ -11,8 +12,31 @@ const selectedExpenseId = ref(null);
 const show = ref(false);   // <- Accessible dans le template
 // =================
 
-onMounted(() => {
-  expenseStore.fetchExpenses();
+onMounted(async () => {
+  // Récupérer l'utilisateur connecté
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error("Erreur récupération utilisateur :", userError);
+    return;
+  }
+
+  const user = userData.user;
+  if (!user) {
+    console.error("Aucun utilisateur connecté");
+    return;
+  }
+
+  // Récupérer les dépenses de cet utilisateur
+  const { data: expenses, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Erreur récupération dépenses :', error);
+  } else {
+    expenseStore.expenses = expenses;
+  }
 });
 
 // Sélectionner une dépense
@@ -29,7 +53,7 @@ const deleteSelectedExpense = () => {
 // Action exécutée APRES confirmation
 const removeItem = async () => {
   try {
-    await expenseStore.deleteExpense(selectedExpenseId.value);
+    await supabase.from('expenses').delete().eq('id', selectedExpenseId.value);
     selectedExpenseId.value = null;
     show.value = false;
   } catch (error) {
@@ -130,7 +154,7 @@ const getCategoryColor = (category) => {
                 <span class="id-badge">#{{ expense.id }}</span>
               </td>
               <td data-label="Nom">
-                <strong>{{ expense.name }}</strong>
+                <strong>{{ expense.title }}</strong>
               </td>
               <td data-label="Montant">
                 <span class="amount">{{ separatordemilier(expense.amount) }} Ar</span>

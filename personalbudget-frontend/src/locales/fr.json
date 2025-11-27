@@ -88,6 +88,7 @@
         "spentLabel": "Dépensé :",
         "remainingLabel": "Restant :",
         "usageLabel": "Utilisation du budget :",
+        "amountPlaceholder": "Montant",
         "emptyState": "💡 Définissez un budget mensuel pour suivre vos dépenses !"
     },
     "expenses": {
@@ -99,6 +100,7 @@
         "addTitle": "Ajouter une dépense",
         "namePlaceholder": "Nom de la dépense",
         "amountPlaceholder": "Montant",
+        "expense_report": "Rapport des dépenses",
         "addBtn": "Ajouter la dépense",
         "table": {
             "id": "ID",

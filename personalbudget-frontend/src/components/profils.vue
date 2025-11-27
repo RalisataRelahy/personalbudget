@@ -2,8 +2,8 @@
   <div class="profil-content">
     <div class="profil-header">
       <div class="header-glow"></div>
-      <h2 class="main-title">{{ t("nav.profile") }}</h2>
-      <p class="subtitle">{{ t("profil.manage_account") }}</p>
+      <h2 class="main-title">{{ t("nav.profile")}}</h2>
+      <p class="subtitle">{{ t("profil.manage_account")}}</p>
     </div>
 
     <div class="profil-grid">
@@ -24,7 +24,7 @@
           <div class="info-grid">
             <div class="info-group">
               <label>{{ t("profil.username") }}</label>
-              <p class="user-data">{{ user?.username || '...' }}</p>
+              <p class="user-data">{{ user?.user_metadata?.full_name || '...' }}</p>
             </div>
             <div class="info-group">
               <label>{{ t("profil.email") }}</label>
@@ -125,7 +125,7 @@
               <div class="stat-bg-circle"></div>
               <TargetIcon class="stat-icon-large" />
               <span class="stat-label">Épargne</span>
-              <span class="stat-value-large">23%</span>
+              <span class="stat-value-large">{{percentEpargne}}%</span>
             </div>
           </div>
         </div>
@@ -199,10 +199,10 @@
 
     <ConfirmModal 
       v-model="showDeleteModal"
-      :title="t('profil.delete_account')" 
-      :message="t('profil.delete_confirm')" 
-      :cancel-text="t('confirm.cancel')" 
-      :confirm-text="t('profil.delete_account')"
+      :title="t('deleteAccount.title')" 
+      :message="t('deleteAccount.message')" 
+      :cancel-text="t('deleteAccount.cancel')" 
+      :confirm-text="t('deleteAccount.confirm')"
       type="danger"
       @confirm="deleteAccount"
     >
@@ -210,7 +210,7 @@
         <input 
           type="password" 
           v-model="passwordConfirm" 
-          :placeholder="t('profil.enter_password')"
+          :placeholder="t('auth.passwordPlaceholder')"
           class="password-input"
         />
       </template>
@@ -223,12 +223,11 @@ import { computed, onMounted, ref, h } from 'vue';
 import axios from 'axios';
 import { useUserStore } from '../services/userStore';
 import { useI18n } from "vue-i18n";
-import { useExpenseStore } from "../stores/expenseStore";
 import ChangingPassword from "./usefulls/changingpassword.vue";
 import ConfirmModal from "./usefulls/confirmate.vue";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
+import { supabase } from '../services/supabase';
 // Icons Components
 const UserIcon = () => h('svg', { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, [
   h('path', { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" }),
@@ -321,6 +320,9 @@ const TargetIcon = () => h('svg', { xmlns: "http://www.w3.org/2000/svg", viewBox
   h('circle', { cx: "12", cy: "12", r: "2" })
 ]);
 
+const user = ref(null);
+const monthlyBudget = ref(0);
+
 // Composables
 const { t, locale } = useI18n();
 const userStore = useUserStore();
@@ -332,8 +334,35 @@ const showChangePassword = ref(false);
 const passwordConfirm = ref('');
 const notifications = ref(true);
 
-// Computed
-const user = computed(() => userStore.user);
+onMounted(async () => {
+  // Charge user
+  const { data } = await supabase.auth.getUser();
+  user.value = data.user;
+
+  // Charge budget Supabase
+  await loadBudgetFromSupabase();
+});
+const loadBudgetFromSupabase = async () => {
+  const { data, error } = await supabase
+    .from('budgets')
+    .select('total')
+    .eq('user_id', user.value.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  if (data) monthlyBudget.value = Number(data.total || 0);
+};
+// Tes computed restent identiques
+const percentEpargne = computed(() => {   
+  const totalSaved = monthlyBudget.value - totalSpent.value;
+  return totalThisMonth.value > 0
+    ? ((totalSaved / monthlyBudget.value) * 100).toFixed(2)
+    : 0;
+});
 const currentLocale = computed(() => locale.value);
 const totalSpent = computed(() => {
   return expenseStore.expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
@@ -352,6 +381,19 @@ const totalThisMonth = computed(() => {
     return total;
   }, 0);
 });
+
+const loadFromStorage = (key, defaultValue = []) => {
+  const item = localStorage.getItem(key);
+  return item ? JSON.parse(item) : defaultValue;
+};
+
+// const monthlyBudget = ref(loadFromStorage('monthlyBudget', 0));
+
+// const percentEpargne = computed(() => {   
+//   const totalSaved = monthlyBudget.value - totalSpent.value; // ⚡ .value pour computed
+//   console.log(`totalSaved : ${totalSaved}, monthlyBudget : ${monthlyBudget.value}, totalSpent : ${totalSpent.value}`);
+//   return totalThisMonth.value > 0 ? ((totalSaved / monthlyBudget.value) * 100).toFixed(2) : 0;
+// });
 
 const avgPerMonth = computed(() => {
   if (!expenseStore.expenses.length) return 0;
@@ -409,11 +451,11 @@ const exportPDF = async () => {
       return;
     }
     const doc = new jsPDF();
-    doc.text(t('profil.expense_report'), 14, 20);
-    const tableColumn = ["Date", "Description", "Amount", "Category"];
+    doc.text(t('expenses.expense_report'), 14, 20);
+    const tableColumn = [t('expenses.table.date'), t('expenses.table.name'), t('expenses.table.amount'), t('expenses.table.category')];
     const tableRows = expenseStore.expenses.map(exp => [
-      new Date(exp.date || exp.createdAt).toLocaleDateString(),
-      exp.description || '-',
+      exp.created_at,
+      exp.name,
       formatCurrency(exp.amount || 0),
       exp.category || '-'
     ]);
@@ -432,6 +474,7 @@ const exportPDF = async () => {
 };
 
 const deleteAccount = async () => {
+  console.log("clicked!!______________________________");
   if (!passwordConfirm.value) {
     alert(t('profil.enter_password'));
     return;
@@ -1034,14 +1077,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 1rem 2rem;
+  padding: 0.5rem 2rem;
   border: none;
   border-radius: 14px;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 100%;
+  width: 90%;
 }
 
 .btn-primary {

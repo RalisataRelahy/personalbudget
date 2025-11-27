@@ -1,11 +1,12 @@
 <script setup>
 import Header from './usefulls/header.vue';
 import { useRouter } from 'vue-router';
+import { supabase } from '../services/supabase';
 
 const router = useRouter();
 
-// logout function
 function logout() {
+  supabase.auth.signOut();  // supprime la session Supabase
   localStorage.removeItem("token");
   router.push("/login");
 }
@@ -13,38 +14,15 @@ function logout() {
 
 <template>
   <div>
-    <Header :onLogout="logout" />  <!-- pass logout to header if needed -->
-    <router-view /> <!-- This is where subpages render -->
+    <Header :onLogout="logout" /> <!-- Header avec bouton logout -->
+    <router-view /> <!-- Toutes les pages enfants seront rendues ici -->
   </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-}
 router-view {
-  background-color: var(--card-bg);
-}
-.logo {
   display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+  padding: 2rem;
+  background-color: var(--card-bg);
 }
 </style>

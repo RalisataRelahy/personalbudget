@@ -4,7 +4,7 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1>{{t("home.heroTitle")}}</h1>
+        <h1>{{t("home.heroTitle")}},{{ user?.user_metadata.full_name }}</h1>
         <p>{{t("home.heroSubtitle")}}</p>
         <router-link to="/dashboard" class="btn-primary">{{t("home.heroCta")}}</router-link>
       </div>
@@ -45,7 +45,18 @@
 
 <script setup>
 import { useI18n } from "vue-i18n";
-
+import { ref, onMounted } from 'vue';
+import { supabase } from '../services/supabase';
+const user = ref(null);
+onMounted(async () => {
+  const { data: { user: currentUser }, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error("Erreur récupération user :", error);
+  } else {
+    user.value = currentUser;
+    console.log("Utilisateur connecté :", user.value);
+  }
+});
 const { t, locale } = useI18n();
 </script>
 

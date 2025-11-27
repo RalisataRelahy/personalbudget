@@ -1,73 +1,72 @@
 <!-- src/components/BudgetTracker.vue -->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useUserStore } from '../services/userStore';
-import { useI18n } from "vue-i18n";
+import { supabase } from '../services/supabase';
+import { useI18n } from 'vue-i18n';
 
-const { t, locale } = useI18n();
-const userStore = useUserStore();
+const { t } = useI18n();
+const budget = ref(0);          // montant actuel du budget
+const newBudget = ref(0);       // input utilisateur pour mise à jour
 
-// Pour saisir le nouveau budget
-const newBudget = ref(0);
-
-// Fonction pour mettre à jour le budget
-const update = async () => {
-  if (newBudget.value > 0) {
-    await userStore.updateBudget(newBudget.value);
-    newBudget.value = 0;
-  }
-};
-
-// Charger le budget au montage
-onMounted(async () => {
-  await userStore.fetchBudget();
-});
-
-// Computed pour lier le store
-const budget = computed(() => userStore.budget);
-
-// Props si tu veux passer des infos sur les dépenses
+// Props pour dépenses totales
 const props = defineProps({
-  monthlyBudget: Number,
-  totalSpent: Number,
+  totalSpent: { type: Number, default: 0 },
 });
 
-const emit = defineEmits(['set-budget']);
+// Charger le budget existant
+onMounted(async () => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return console.error("User not found", userError);
 
-// Gestion input budget via props/emit (optionnel)
-const budgetInput = ref('');
-const setBudget = () => {
-  if (budgetInput.value) {
-    emit('set-budget', Number(budgetInput.value));
-    budgetInput.value = '';
+  const { data, error } = await supabase
+    .from('budgets')   // <-- ici le vrai nom de ta table
+    .select('total')
+    .eq('user_id', user.id)
+
+  if (error) console.error(error);
+  else {
+    for(var i=0;i<data.length;i++){
+      budget.value += data[i].total;
+    }
   }
-};
-
-// Calculs pour affichage
-const budgetUsage = computed(() => {
-  if (!budget.value) return 0;
-  return (props.totalSpent / budget.value) * 100;
 });
 
-const separatordemilier = (n) => {
-  const number = Number(n);
-  if (isNaN(number)) return "0";
-  return new Intl.NumberFormat("fr-FR").format(number);
+// Mettre à jour le budget
+const updateBudget = async () => {
+  if (newBudget.value <= 0) return;
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return console.error("User not found", userError);
+
+  const { data, error } = await supabase
+    .from('budgets')   // <-- même chose ici
+    .upsert({ user_id: user.id,title:"New budget", total: newBudget.value })
+    .select();
+
+  if (error) console.error(error);
+  else {
+    for(var i=0;i<data.length;i++){
+      budget.value += data[i].total;
+    }
+  }
+
+  newBudget.value = 0;
 };
 
 
+
+// Computed pour affichage
 const remainingBudget = computed(() => budget.value - props.totalSpent);
-
-const monthlyBudgetFormatted = computed(() => separatordemilier(budget.value));
-
-const totalSpentFormatted = computed(() => separatordemilier(props.totalSpent));
-
-const remainingBudgetFormatted = computed(() => separatordemilier(remainingBudget.value));
 
 const isOverBudget = computed(() => remainingBudget.value < 0);
 const budgetStatus = computed(() => isOverBudget.value ? 'over-budget' : 'under-budget');
+
+const monthlyBudgetFormatted = computed(() => new Intl.NumberFormat('fr-FR').format(budget.value));
+const totalSpentFormatted = computed(() => new Intl.NumberFormat('fr-FR').format(props.totalSpent));
+const remainingBudgetFormatted = computed(() => new Intl.NumberFormat('fr-FR').format(remainingBudget.value));
+
 const consumptionPercentage = computed(() => {
-  if (!props.monthlyBudget) return 0;
+  if (!budget.value) return 0;
   return ((props.totalSpent / budget.value) * 100).toFixed(1);
 });
 </script>
@@ -75,16 +74,15 @@ const consumptionPercentage = computed(() => {
 <template>
   <div class="budget-tracker">
     <div class="budget-card" :class="budgetStatus">
-      
       <div class="budget-form">
         <input type="number" v-model.number="newBudget" placeholder="Set new budget" />
-        <button @click="update" class="btn">{{ t("budget.setNewBudget") }}</button>
+        <button @click="updateBudget" class="btn">{{ t("budget.setNewBudget") }}</button>
       </div>
 
       <div class="budget-info">
         <div class="budget-item">
-          <span>{{ t("budget.title") }}:  </span>
-          <strong>{{ monthlyBudgetFormatted || 0 }} Ar</strong>
+          <span>{{ t("budget.title") }}: </span>
+          <strong>{{ monthlyBudgetFormatted }} Ar</strong>
         </div>
         <div class="budget-item">
           <span>{{ t("budget.spentLabel") }}</span>
@@ -95,10 +93,10 @@ const consumptionPercentage = computed(() => {
           <strong>{{ remainingBudgetFormatted }} Ar</strong>
         </div>
 
-        <div v-if="monthlyBudget > 0" class="consumption-info">
+        <div v-if="budget.value > 0" class="consumption-info">
           <div class="budget-item">
             <span>{{ t("budget.usageLabel") }}</span>
-            <strong :class="{ 'text-red': budgetUsage > 80, 'text-orange': budgetUsage > 50 && budgetUsage <= 80, 'text-green': budgetUsage <= 50 }">
+            <strong :class="{ 'text-red': consumptionPercentage > 80, 'text-orange': consumptionPercentage > 50 && consumptionPercentage <= 80, 'text-green': consumptionPercentage <= 50 }">
               {{ consumptionPercentage }}%
             </strong>
           </div>
@@ -106,20 +104,21 @@ const consumptionPercentage = computed(() => {
             <div class="progress-bar">
               <div 
                 class="progress-fill" 
-                :class="{ 'progress-danger': budgetUsage > 80, 'progress-warning': budgetUsage > 50 && budgetUsage <= 80, 'progress-safe': budgetUsage <= 50 }"
-                :style="{ width: `${Math.min(budgetUsage, 100)}%` }"
+                :class="{ 'progress-danger': consumptionPercentage > 80, 'progress-warning': consumptionPercentage > 50 && consumptionPercentage <= 80, 'progress-safe': consumptionPercentage <= 50 }"
+                :style="{ width: `${Math.min(consumptionPercentage, 100)}%` }"
               ></div>
             </div>
           </div>
         </div>
 
-        <div v-if="monthlyBudget === 0" class="no-budget-message">
+        <div v-else class="no-budget-message">
           <p>{{ t("budget.emptyState") }}</p>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 /* Budget Tracker Container */

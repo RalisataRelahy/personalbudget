@@ -88,64 +88,43 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { jwtDecode } from 'jwt-decode';
-
+import { supabase } from '../services/supabase';
 import HeaderLogSing from '../components/usefulls/headerLogSing.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const router = useRouter();
 
-// Reactive variables
-const identifier = ref("");
+const identifier = ref(""); // champ formulaire
 const password = ref("");
 const loading = ref(false);
 const error = ref("");
-const userId = ref(null);
 
-// Login method
 async function login() {
   loading.value = true;
   error.value = "";
 
   try {
-    // Step 1: Login to get token
-    const res = await fetch("http://localhost:3000/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: identifier.value, password: password.value })
+    const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
+      email: identifier.value, // utilise le v-model
+      password: password.value
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      error.value = data.error || "Wrong password! Please try again.";
+    if (supabaseError) {
+      error.value = supabaseError.message;
       return;
     }
 
-    // Step 2: Store token
-    localStorage.setItem("token", data.token);
-
-    // Step 3: Fetch current user
-    const meRes = await fetch("http://localhost:3000/users/me", {
-      headers: { "Authorization": "Bearer " + data.token }
-    });
-
-    const meData = await meRes.json();
-
-    if (!meRes.ok) {
-      error.value = meData.error || "Unable to fetch user info";
+    if (!data.user) {
+      error.value = "Email not confirmed or invalid credentials";
       return;
     }
 
-    // Step 4: Save user data locally
-    const user = meData.user;
-    userId.value = user.id;
-    localStorage.setItem("currentUser", JSON.stringify(user));
-    console.log("Current user:", user);
+    // Sauvegarde local
+    localStorage.setItem("currentUser", JSON.stringify(data.user));
+    console.log("Logged in user:", data.user);
 
-    // Step 5: Redirect
-    router.push("/");
+    router.push("/"); // redirection
 
   } catch (err) {
     error.value = "Server unreachable. Please try again later.";
@@ -155,6 +134,8 @@ async function login() {
   }
 }
 </script>
+
+
 
 
 <style scoped>
@@ -174,8 +155,8 @@ async function login() {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    margin-top:0;
-    padding: 0px 0px;
+    margin-top:0px;
+    padding: 0px 0px 40px;
 }
 
 .form-wrapper {

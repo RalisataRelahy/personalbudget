@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useExpenseStore } from "../stores/expenseStore";
 import InfoModal from "@/components/usefulls/info.vue";
-// import ConfirmModal from "@/components/usefulls/confirmate.vue";
 import { useI18n } from "vue-i18n";
-const { t, locale } = useI18n();
+import { supabase } from '../services/supabase';
+
+const { t } = useI18n();
 const showInfo = ref(false);
 const expenseStore = useExpenseStore();
 
@@ -12,63 +13,104 @@ const name = ref("");
 const amount = ref(0);
 const category = ref("Food");
 
+const user = ref(null);
+
+onMounted(async () => {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error("Erreur récupération utilisateur :", error);
+  } else {
+    user.value = data.user;
+  }
+});
+
 const addExpenseItem = async () => {
-  showInfo.value = true;
+  if (!user.value) {
+    console.error("Utilisateur non connecté !");
+    return;
+  }
+
   if (!name.value || amount.value <= 0) return;
-  await expenseStore.addExpense({ name: name.value, amount: amount.value, category: category.value });
+
+  const { data, error } = await supabase.from('expenses').insert([{
+    user_id: user.value.id,
+    title: name.value,
+    amount: amount.value,
+    category: category.value,
+  }]);
+
+  if (error) {
+    console.error("Erreur insertion :", error);
+    return;
+  }
+
+  showInfo.value = true;
+
   name.value = "";
   amount.value = 0;
   category.value = "Food";
 };
 </script>
 
+
 <template>
   <div class="content">
     <div class="form-content">
-    <InfoModal
-      v-model="showInfo"
-      :title="t('expenses.registeredTitle')"
-      :message="t('expenses.registeredSubtitle')"
-    />
-    <h2>{{ t("expenses.addTitle") }}</h2>
-    <input v-model="name" :placeholder="t('expenses.namePlaceholder')" />
-    <input v-model.number="amount" :placeholder="t('expenses.amountPlaceholder')" type="number" />
-    <select v-model="category">
-      <option>{{ t("expenses.categories.Food") }}</option>
-      <option>{{ t("expenses.categories.Transport") }}</option>
-      <option>{{ t("expenses.categories.Housing") }}</option>
-      <option>{{ t("expenses.categories.Health") }}</option>
-      <option>{{ t("expenses.categories.Education") }}</option>
-      <option>{{ t("expenses.categories.Entertainment") }}</option>
-      <option>{{ t("expenses.categories.Savings / Investments") }}</option>
-      <option>{{ t("expenses.categories.Shopping") }}</option>
-      <option>{{ t("expenses.categories.Work / Business") }}</option>
-      <option>{{ t("expenses.categories.Other") }}</option>
-    </select>
-    <button @click="addExpenseItem">Add Expense</button>
+      <InfoModal
+        v-model="showInfo"
+        :title="t('expenses.registeredTitle')"
+        :message="t('expenses.registeredSubtitle')"
+      />
+      <h2>{{ t("expenses.addTitle") }}</h2>
+      <input 
+        v-model="name" 
+        :placeholder="t('expenses.namePlaceholder')" 
+      />
+      <input 
+        v-model.number="amount" 
+        :placeholder="t('expenses.amountPlaceholder')" 
+        type="number" 
+      />
+      <select v-model="category">
+        <option>{{ t("expenses.categories.Food") }}</option>
+        <option>{{ t("expenses.categories.Transport") }}</option>
+        <option>{{ t("expenses.categories.Housing") }}</option>
+        <option>{{ t("expenses.categories.Health") }}</option>
+        <option>{{ t("expenses.categories.Education") }}</option>
+        <option>{{ t("expenses.categories.Entertainment") }}</option>
+        <option>{{ t("expenses.categories.Savings / Investments") }}</option>
+        <option>{{ t("expenses.categories.Shopping") }}</option>
+        <option>{{ t("expenses.categories.Work / Business") }}</option>
+        <option>{{ t("expenses.categories.Other") }}</option>
+      </select>
+      <button @click="addExpenseItem">Add Expense</button>
+    </div>
   </div>
-  </div>
-  
 </template>
 
 <style scoped>
-/* Content Container */
+/* Reset et Base */
+* {
+  box-sizing: border-box;
+}
+
+/* Content Container - Responsive */
 .content {
-  /* max-width: 600px; */
-  /* margin: 0 auto; */
-  padding: 1rem 30rem;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 5vw, 30rem);
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
 /* Form Content */
 .form-content {
   width: 100%;
+  max-width: 600px;
   background: white;
-  padding: 3rem;
-  border-radius: 24px;
+  padding: clamp(2rem, 4vw, 3rem);
+  border-radius: clamp(16px, 3vw, 24px);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(102, 126, 234, 0.1);
   position: relative;
@@ -81,45 +123,46 @@ const addExpenseItem = async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 6px;
+  height: clamp(4px, 1vw, 6px);
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
 }
 
 /* Title */
 .form-content h2 {
-  font-size: 2rem;
+  font-size: clamp(1.375rem, 4vw, 2rem);
   font-weight: 800;
   color: #2d3748;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
   text-align: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  padding-bottom: 1rem;
 }
 
 .form-content h2::after {
   content: '';
   position: absolute;
-  bottom: -0.75rem;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 60px;
-  height: 4px;
+  width: clamp(50px, 10vw, 60px);
+  height: clamp(3px, 0.5vw, 4px);
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   border-radius: 2px;
 }
 
-/* Input Fields */
+/* Input Fields - Fully Responsive */
 .form-content input,
 .form-content select {
   width: 100%;
-  padding: 1rem 1.5rem;
-  margin-bottom: 1.25rem;
+  padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2.5vw, 1.5rem);
+  margin-bottom: clamp(0.875rem, 2vw, 1.25rem);
   border: 2px solid #e2e8f0;
-  border-radius: 14px;
-  font-size: 1rem;
+  border-radius: clamp(12px, 2vw, 14px);
+  font-size: clamp(0.875rem, 2vw, 1rem);
   font-weight: 500;
   color: #2d3748;
   background: #f7fafc;
@@ -140,7 +183,7 @@ const addExpenseItem = async () => {
   transform: translateY(-2px);
 }
 
-/* Number Input - Remove Spinner */
+/* Remove Number Spinner */
 .form-content input[type="number"]::-webkit-outer-spin-button,
 .form-content input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -154,12 +197,7 @@ const addExpenseItem = async () => {
 /* Select Dropdown */
 .form-content select {
   cursor: pointer;
-  /* appearance: none; */
-  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); */
-  /* background-repeat: no-repeat; */
-  /* background-position: right 1rem center; */
-  /* background-size: 20px; */
-  padding-right: 3rem;
+  padding-right: clamp(2.5rem, 5vw, 3rem);
 }
 
 .form-content select option {
@@ -168,20 +206,20 @@ const addExpenseItem = async () => {
   color: #2d3748;
 }
 
-/* Submit Button */
+/* Submit Button - Responsive */
 .form-content button {
   width: 100%;
-  padding: 1.125rem 2rem;
+  padding: clamp(0.938rem, 2vw, 1.125rem) clamp(1.25rem, 3vw, 2rem);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 14px;
-  font-size: 1.125rem;
+  border-radius: clamp(12px, 2vw, 14px);
+  font-size: clamp(0.938rem, 2vw, 1.125rem);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-  margin-top: 0.75rem;
+  margin-top: clamp(0.5rem, 1vw, 0.75rem);
   position: relative;
   overflow: hidden;
 }
@@ -216,16 +254,7 @@ const addExpenseItem = async () => {
   transform: none;
 }
 
-/* Input Icons (optional enhancement) */
-.form-content input:valid {
-  border-color: #48bb78;
-}
-
-.form-content input:invalid:not(:placeholder-shown) {
-  border-color: #f56565;
-}
-
-/* Entrance Animation */
+/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -253,111 +282,108 @@ const addExpenseItem = async () => {
 .form-content select { animation-delay: 0.25s; }
 .form-content button { animation-delay: 0.3s; }
 
-/* Tablet Styles */
-@media (max-width: 1024px) {
+/* Breakpoints spécifiques */
+
+/* Large Desktop */
+@media (min-width: 1920px) {
   .content {
-    padding: 1.5rem 1rem;
-  }
-
-  .form-content {
-    padding: 2.5rem;
-  }
-
-  .form-content h2 {
-    font-size: 1.75rem;
-  }
-
-  .form-content input,
-  .form-content select {
-    padding: 0.938rem 1.25rem;
-    font-size: 0.938rem;
-  }
-
-  .form-content button {
-    padding: 1rem 1.75rem;
-    font-size: 1rem;
+    padding: 2rem 35rem;
   }
 }
 
-/* Mobile Styles */
+/* Desktop */
+@media (max-width: 1440px) {
+  .content {
+    padding: 1.5rem 20rem;
+  }
+}
+
+/* Laptop */
+@media (max-width: 1280px) {
+  .content {
+    padding: 1.5rem 15rem;
+  }
+}
+
+/* Tablet Large */
+@media (max-width: 1024px) {
+  .content {
+    padding: 1.5rem 8rem;
+  }
+}
+
+/* Tablet */
 @media (max-width: 768px) {
   .content {
-    padding: 1rem;
+    padding: 1.5rem 2rem;
     align-items: flex-start;
     padding-top: 2rem;
   }
+}
 
-  .form-content {
-    padding: 2rem 1.5rem;
-    border-radius: 20px;
+/* Mobile Large */
+@media (max-width: 640px) {
+  .content {
+    padding: 1rem;
+    padding-top: 1.5rem;
   }
-
-  .form-content h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1.75rem;
-  }
-
-  .form-content input,
-  .form-content select {
-    padding: 0.875rem 1.125rem;
-    margin-bottom: 1rem;
-    font-size: 0.938rem;
-  }
-
-  .form-content select {
-    background-position: right 0.875rem center;
-    padding-right: 2.5rem;
-  }
-
-  .form-content button {
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
+  
+  .form-content button:hover {
+    transform: none;
   }
 }
 
-/* Small Mobile */
+/* Mobile */
 @media (max-width: 480px) {
   .content {
     padding: 0.75rem;
-    padding-top: 1.5rem;
-  }
-
-  .form-content {
-    padding: 1.75rem 1.25rem;
-    border-radius: 16px;
-  }
-
-  .form-content h2 {
-    font-size: 1.375rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .form-content h2::after {
-    width: 50px;
-    height: 3px;
-  }
-
-  .form-content input,
-  .form-content select {
-    padding: 0.875rem 1rem;
-    margin-bottom: 0.875rem;
-    font-size: 0.875rem;
-    border-radius: 12px;
-  }
-
-  .form-content select {
-    background-position: right 0.75rem center;
-    background-size: 18px;
-  }
-
-  .form-content button {
-    padding: 0.938rem 1.25rem;
-    font-size: 0.938rem;
-    border-radius: 12px;
+    padding-top: 1rem;
   }
 }
 
-/* Focus Styles for Accessibility */
+/* Mobile Small */
+@media (max-width: 360px) {
+  .content {
+    padding: 0.5rem;
+    padding-top: 1rem;
+  }
+}
+
+/* Touch Devices - Amélioration UX */
+@media (hover: none) and (pointer: coarse) {
+  .form-content input,
+  .form-content select,
+  .form-content button {
+    font-size: 16px; /* Évite le zoom automatique sur iOS */
+  }
+  
+  .form-content button:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Landscape Mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+  .content {
+    padding: 1rem;
+    align-items: flex-start;
+  }
+  
+  .form-content {
+    padding: 1.5rem;
+  }
+  
+  .form-content h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .form-content input,
+  .form-content select {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Accessibilité */
 .form-content input:focus-visible,
 .form-content select:focus-visible,
 .form-content button:focus-visible {
@@ -368,7 +394,6 @@ const addExpenseItem = async () => {
 /* Loading State */
 .form-content button.loading {
   pointer-events: none;
-  position: relative;
 }
 
 .form-content button.loading::after {
@@ -387,9 +412,7 @@ const addExpenseItem = async () => {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* Error State */
@@ -399,35 +422,12 @@ const addExpenseItem = async () => {
 }
 
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-10px);
-  }
-  75% {
-    transform: translateX(10px);
-  }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }
 
-/* Success State */
-.form-content.success {
-  animation: successPulse 0.6s ease;
-}
-
-@keyframes successPulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Accessibility */
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -438,7 +438,7 @@ const addExpenseItem = async () => {
   }
 }
 
-/* Dark Mode Support */
+/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   .form-content {
     background: #2d3748;
@@ -461,39 +461,9 @@ const addExpenseItem = async () => {
     background: #2d3748;
   }
 
-  /* .form-content select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  } */
-
   .form-content select option {
     background: #2d3748;
     color: #e2e8f0;
   }
-}
-
-/* Floating Label Effect (optional enhancement) */
-.form-group {
-  position: relative;
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  position: absolute;
-  left: 1.5rem;
-  top: 1rem;
-  color: #a0aec0;
-  font-size: 1rem;
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-.form-group input:focus + label,
-.form-group input:not(:placeholder-shown) + label {
-  top: -0.5rem;
-  left: 1rem;
-  font-size: 0.75rem;
-  color: #667eea;
-  background: white;
-  padding: 0 0.5rem;
 }
 </style>

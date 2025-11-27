@@ -115,7 +115,7 @@
 <script>
 import HeaderLogSing from "@/components/usefulls/headerLogSing.vue";
 import { useI18n } from 'vue-i18n';
-
+import { supabase } from '../services/supabase';
 export default {
   components: { HeaderLogSing },
   data() {
@@ -134,42 +134,40 @@ export default {
   },
   methods: {
     async signup() {
-      this.loading = true;
-      this.error = "";
-      this.success = "";
+  this.loading = true;
+  this.error = "";
+  this.success = "";
 
-      try {
-        const res = await fetch("http://localhost:3000/users/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: this.username,
-            email: this.email,
-            password: this.password,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          this.error = data.error || this.t("signup.failed"); // Use i18n
-          return;
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: this.email,
+      password: this.password,
+      options: {
+            data: { full_name: "Nekena" } // <- champ personnalisé
         }
+    });
 
-        this.success = this.t("signup.success"); // Use i18n
+    if (error) {
+      // Affiche le message d'erreur Supabase
+      this.error = error.message;
+      return;
+    }
 
-        // Redirect after 1.5s
-        setTimeout(() => {
-          this.$router.push("/login");
-        }, 1500);
+    this.success = this.t("signup.success");
 
-      } catch (err) {
-        this.error = this.t("signup.serverError");
-        console.error("Signup error:", err);
-      } finally {
-        this.loading = false;
-      }
-    },
+    // Redirection après 1.5s
+    setTimeout(() => {
+      this.$router.push("/login");
+    }, 1500);
+
+  } catch (err) {
+    this.error = this.t("signup.serverError") || "Server unreachable. Try again later.";
+    console.error("Signup error:", err);
+  } finally {
+    this.loading = false;
+  }
+}
+
   },
 };
 </script>

@@ -19,4 +19,17 @@ const app = createApp(App);
 app.use(router);
 app.use(createPinia());
 app.use(i18n);
+// main.js (après app.use(i18n))
+import { supabase } from './services/supabase';
+
+// version async avec v2
+const { data: { user }, error } = await supabase.auth.getUser();
+
+if (error) {
+  console.error("Error fetching user:", error);
+} else {
+  console.log("Current user:", user);
+}
+
+
 app.mount("#app"); // ← THIS MUST MATCH <div id="app"></div> in index.html
